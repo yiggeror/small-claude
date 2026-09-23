@@ -1,0 +1,12 @@
+node_modules/
+production/build/frames/
+production/build/sfx/
+production/build/*.wav
+production/build/score.mid
+production/sfx_candidates/
+production/kenney/
+dev/*.png
+production/build/site_tmp/
+production/build/*.log
+__pycache__/
+production/build/x264pass*

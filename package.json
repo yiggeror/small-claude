@@ -1,0 +1,14 @@
+{
+  "name": "after-the-laptop-closes",
+  "private": true,
+  "type": "module",
+  "description": "A short hand-drawn animated film rendered entirely in code.",
+  "scripts": {
+    "serve": "node production/tools/serve.cjs 8080",
+    "cues": "node production/tools/export_cues.mjs",
+    "render": "node production/tools/render_video.cjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}

@@ -1,0 +1,26 @@
+<!doctype html><html><body style="margin:0;background:#222">
+<canvas id="c" width="1920" height="1080"></canvas>
+<script type="module">
+import { C, setBoil, text } from '../js/draw.js';
+import { drawCube, cube, cubeEmote } from '../js/cube.js';
+const ctx = document.getElementById('c').getContext('2d');
+window.renderAt = (t) => {
+  setBoil(t);
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle = C.paper; ctx.fillRect(0,0,1920,1080);
+  const views = [
+    ['front', {}], ['3/4 R', {facing: 1}], ['3/4 L', {facing:-1}], ['walk', {walk: 0.25, walkAmt:1, facing:1}], ['squash', {sq:0.35}], ['stretch', {sq:-0.3, tuck:0.6}],
+  ];
+  views.forEach(([n, o], i) => { drawCube(ctx, cube({x: 170 + i*300, y: 260, size: 200, ...o})); text(ctx, n, 170+i*300, 310, {size: 36}); });
+  const ex = [['normal',{}],['happy',{eyes:'happy', mouth:'smile', blush:0.8}],['surprise',{eyes:'wide', mouth:'o'}],['?',{eyes:'normal', lookX:-1, brows:0.8}],['angry',{eyes:'squeeze', brows:-1}],['shy',{eyes:'shy', blush:1}],
+     ['sly',{eyes:'sly', mouth:'cat'}],['star',{eyes:'star', mouth:'drool', mouthK:1}],['munch',{eyes:'content', mouth:'munch', mouthK:1, blush:0.6, crumb:1}],['dizzy',{eyes:'dizzy', mouth:'wave'}],['serious',{eyes:'normal', mouth:'line', brows:-0.2}],['reach',{armR:{a:0.3,len:2.5}, armL:{a:1.2}}]];
+  ex.forEach(([n,o],i)=>{ const x = 130 + (i%6)*300, y = 620 + Math.floor(i/6)*330; const st = cube({x, y, size: 180, ...o}); drawCube(ctx, st);
+    if (n==='surprise') cubeEmote(ctx, st, '!', 1); if (n==='?') cubeEmote(ctx, st, '?', 1); if (n==='happy') cubeEmote(ctx, st, 'heart', 1); if (n==='angry') cubeEmote(ctx, st, 'puff', 1);
+    text(ctx, n, x, y+45, {size: 34}); });
+  return document.getElementById('c').toDataURL('image/png');
+};
+await document.fonts.load('32px "Patrick Hand"');
+window.__ready = true;
+</script>
+<style>@font-face{font-family:"Patrick Hand";src:url(../fonts/PatrickHand-Regular.ttf)}</style>
+</body></html>

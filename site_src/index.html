@@ -1,0 +1,197 @@
+<title>关闭电脑之后</title>
+<meta name="description" content="After the Laptop Closes — a short hand-drawn animated film, drawn entirely in code.">
+<style>
+/*__FONTS__*/
+:root {
+  --night: #13121a;
+  --night-2: #1c1b27;
+  --panel: #232231;
+  --line: #3a3847;
+  --cream: #f3ead8;
+  --cream-dim: #b8ae9c;
+  --orange: #e8743b;
+  --orange-soft: #f39a62;
+  --glow: rgba(232, 116, 59, 0.28);
+  --ink: #2b2622;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: auto; }
+body {
+  margin: 0;
+  background:
+    radial-gradient(1px 1px at 12% 18%, rgba(255, 240, 210, .55) 50%, transparent 51%),
+    radial-gradient(1px 1px at 78% 9%, rgba(255, 240, 210, .45) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 64% 22%, rgba(255, 240, 210, .35) 50%, transparent 51%),
+    radial-gradient(1px 1px at 30% 6%, rgba(255, 240, 210, .4) 50%, transparent 51%),
+    radial-gradient(1px 1px at 91% 30%, rgba(255, 240, 210, .3) 50%, transparent 51%),
+    radial-gradient(1200px 520px at 50% -140px, #232a4f 0%, transparent 70%),
+    var(--night);
+  color: var(--cream);
+  font: 16px/1.6 "Patrick Hand", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  padding-inline: 16px;
+  padding-block: 28px 56px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 22px; }
+header.title { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; }
+.title h1 { margin: 0; font: 400 clamp(34px, 5vw, 54px)/1.05 "ZCOOL KuaiLe", "PingFang SC", sans-serif; letter-spacing: .02em; text-wrap: balance; }
+.title h1 .en { display: block; font: 400 clamp(18px, 2.2vw, 24px)/1.3 "Patrick Hand", sans-serif; color: var(--cream-dim); letter-spacing: .03em; margin-top: 6px; }
+.title .meta { color: var(--cream-dim); font-size: 15px; text-align: right; }
+.title .meta b { color: var(--orange-soft); font-weight: 400; }
+
+/* ---------- the screen */
+.stage {
+  position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9;
+  background: #000; border-radius: 12px; overflow: hidden;
+  box-shadow: 0 0 0 1px #2d2b3a, 0 30px 90px -20px var(--glow), 0 12px 40px rgba(0, 0, 0, .55);
+}
+.stage canvas { display: block; width: 100%; height: 100%; cursor: pointer; }
+.stage:fullscreen { border-radius: 0; box-shadow: none; display: grid; place-items: center; }
+.stage:fullscreen canvas { width: min(100vw, calc(100vh * 16 / 9)); height: auto; aspect-ratio: 16 / 9; }
+.pseudo-full .stage { position: fixed; inset: 0; z-index: 50; border-radius: 0; aspect-ratio: auto; }
+.pseudo-full .stage canvas { height: auto; aspect-ratio: 16/9; position: absolute; top: 50%; transform: translateY(-50%); }
+
+.play-big {
+  position: absolute; left: 50%; top: 58%; translate: -50% -50%;
+  border: 0; background: none; padding: 0; cursor: pointer; color: var(--cream);
+  display: grid; justify-items: center; gap: 10px; font: 22px/1 "Patrick Hand", sans-serif; letter-spacing: .04em;
+}
+.play-big .cube {
+  width: 128px; height: 82px; background: var(--orange); border: 4px solid var(--ink); border-radius: 6px; position: relative;
+  box-shadow: 0 10px 40px rgba(232, 116, 59, .45); transition: transform .25s cubic-bezier(.3, 1.6, .5, 1);
+}
+.play-big .cube::before, .play-big .cube::after { content: ""; position: absolute; top: 24px; width: 10px; height: 26px; background: var(--ink); border-radius: 4px; }
+.play-big .cube::before { left: 38px; } .play-big .cube::after { right: 38px; }
+.play-big .cube i { position: absolute; bottom: -20px; width: 11px; height: 20px; background: var(--orange); border: 4px solid var(--ink); border-top: 0; border-radius: 0 0 3px 3px; }
+.play-big .cube i:nth-child(1) { left: 12px; } .play-big .cube i:nth-child(2) { left: 30px; } .play-big .cube i:nth-child(3) { right: 30px; } .play-big .cube i:nth-child(4) { right: 12px; }
+.play-big .cube b { position: absolute; top: 28px; width: 18px; height: 16px; background: var(--orange); border: 4px solid var(--ink); border-radius: 3px; }
+.play-big .cube b:nth-of-type(1) { left: -20px; } .play-big .cube b:nth-of-type(2) { right: -20px; }
+.play-big:hover .cube, .play-big:focus-visible .cube { transform: translateY(-6px) scaleY(1.04); }
+.play-big:focus-visible { outline: none; }
+.play-big:focus-visible .label { text-decoration: underline; text-underline-offset: 6px; }
+.play-big .label { margin-top: 18px; padding: 6px 14px; border-radius: 999px; background: rgba(19, 18, 26, .72); backdrop-filter: blur(4px); }
+.is-playing .play-big, .is-paused:not(.at-start):not(.at-end) .play-big { display: none; }
+
+/* ---------- controls */
+.controls { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; }
+.controls button {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 6px 14px;
+  border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--cream);
+  font: 18px/1 "Patrick Hand", "PingFang SC", sans-serif; cursor: pointer;
+}
+.controls button:hover { border-color: var(--orange); }
+.controls button:focus-visible, .chapters button:focus-visible, .scrub-wrap input:focus-visible { outline: 2px solid var(--orange-soft); outline-offset: 2px; }
+.controls svg { width: 16px; height: 16px; fill: currentColor; }
+#btn-toggle .i-pause { display: none; }
+.is-playing #btn-toggle .i-pause { display: block; }
+.is-playing #btn-toggle .i-play { display: none; }
+.scrub-wrap { position: relative; flex: 1 1 260px; height: 40px; display: flex; align-items: center; }
+.scrub-wrap .ticks { position: absolute; inset: 0; pointer-events: none; }
+.scrub-wrap .ticks i { position: absolute; top: 12px; width: 2px; height: 16px; margin-left: -1px; background: rgba(243, 234, 216, .28); border-radius: 1px; }
+#scrub { --p: 0%; width: 100%; appearance: none; -webkit-appearance: none; height: 6px; border-radius: 99px; background: linear-gradient(90deg, var(--orange) var(--p), #3a3847 var(--p)); cursor: pointer; }
+#scrub::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 4px; background: var(--orange); border: 3px solid var(--ink); }
+#scrub::-moz-range-thumb { width: 14px; height: 14px; border-radius: 4px; background: var(--orange); border: 3px solid var(--ink); }
+#time { font-variant-numeric: tabular-nums; color: var(--cream-dim); min-width: 92px; font-size: 18px; }
+.now { color: var(--cream-dim); font-size: 17px; margin: -8px 2px 0; }
+.now span { color: var(--cream); }
+
+/* ---------- chapters */
+section h2 { font: 400 26px/1.2 "ZCOOL KuaiLe", "PingFang SC", sans-serif; margin: 0 0 12px; }
+section h2 small { font: 400 17px/1 "Patrick Hand", sans-serif; color: var(--cream-dim); margin-left: 10px; letter-spacing: .03em; }
+.chapters { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.chapters button {
+  display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: auto auto; column-gap: 12px; align-items: baseline; text-align: left;
+  padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--night-2); color: var(--cream); cursor: pointer;
+  font: 16px/1.3 "Patrick Hand", "PingFang SC", sans-serif;
+}
+.chapters button:hover { border-color: var(--orange); }
+.chapters button[aria-current="true"] { border-color: var(--orange); background: #2a2230; }
+.chapters .n { grid-row: 1 / span 2; color: var(--orange-soft); font-size: 20px; font-variant-numeric: tabular-nums; }
+.chapters .zh { font-family: "ZCOOL KuaiLe", "PingFang SC", sans-serif; font-size: 18px; }
+.chapters .en { grid-column: 2; color: var(--cream-dim); font-size: 15px; }
+.chapters .tc { grid-column: 3; grid-row: 1; color: var(--cream-dim); font-variant-numeric: tabular-nums; font-size: 15px; }
+
+/* ---------- about */
+.about { display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; }
+.about p { margin: 0 0 10px; max-width: 62ch; color: #e6dcc8; }
+.about p.en { color: var(--cream-dim); }
+.about ul { margin: 0; padding-left: 18px; color: var(--cream-dim); }
+.about li { margin-bottom: 6px; }
+.about a { color: var(--orange-soft); }
+.keys kbd { display: inline-block; min-width: 26px; padding: 1px 6px; border-radius: 5px; border: 1px solid var(--line); background: var(--panel); font: 15px/1.4 "Patrick Hand", monospace; text-align: center; color: var(--cream); }
+footer { color: var(--cream-dim); font-size: 14px; border-top: 1px solid var(--line); padding-top: 14px; }
+@media (max-width: 760px) {
+  .about { grid-template-columns: 1fr; }
+  .title .meta { text-align: left; }
+  .play-big .cube { width: 96px; height: 62px; }
+  .play-big .cube::before, .play-big .cube::after { top: 16px; height: 22px; }
+  .play-big .cube::before { left: 26px; } .play-big .cube::after { right: 26px; }
+  .play-big .cube b { top: 20px; }
+}
+@media (max-width: 520px) {
+  .play-big { top: 54%; gap: 4px; font-size: 16px; }
+  .play-big .cube { width: 64px; height: 40px; border-width: 3px; }
+  .play-big .cube::before, .play-big .cube::after { top: 9px; width: 6px; height: 14px; }
+  .play-big .cube::before { left: 17px; } .play-big .cube::after { right: 17px; }
+  .play-big .cube i { bottom: -11px; width: 7px; height: 11px; border-width: 3px; }
+  .play-big .cube i:nth-child(1) { left: 5px; } .play-big .cube i:nth-child(2) { left: 15px; } .play-big .cube i:nth-child(3) { right: 15px; } .play-big .cube i:nth-child(4) { right: 5px; }
+  .play-big .cube b { top: 13px; width: 10px; height: 9px; border-width: 3px; }
+  .play-big .cube b:nth-of-type(1) { left: -12px; } .play-big .cube b:nth-of-type(2) { right: -12px; }
+  .play-big .label { margin-top: 12px; padding: 3px 10px; }
+}
+@media (prefers-reduced-motion: reduce) { .play-big .cube { transition: none; } }
+</style>
+
+<div class="wrap" id="film">
+  <header class="title">
+    <h1>关闭电脑之后<span class="en">After the Laptop Closes</span></h1>
+    <div class="meta">一部 4 分钟的手绘风动画短片 · <b>全部由代码实时绘制</b><br>a 4-minute hand-drawn short, rendered live in your browser</div>
+  </header>
+
+  <div class="stage">
+    <canvas width="1920" height="1080" aria-label="Animated film: After the Laptop Closes"></canvas>
+    <button class="play-big" type="button" aria-label="Play the film">
+      <span class="cube" aria-hidden="true"><b></b><b></b><i></i><i></i><i></i><i></i></span>
+      <span class="label">开始播放 · Play (with sound)</span>
+    </button>
+  </div>
+
+  <div class="controls">
+    <button id="btn-toggle" type="button" aria-label="Play">
+      <svg class="i-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z"/></svg>
+      <svg class="i-pause" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 2.5h3v11h-3zM9.5 2.5h3v11h-3z"/></svg>
+      <span class="label">播放</span>
+    </button>
+    <span id="time">0:00 / 0:00</span>
+    <div class="scrub-wrap"><div class="ticks"></div><input id="scrub" type="range" min="0" value="0" aria-label="Seek"></div>
+    <button id="btn-mute" type="button" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6h3l4-3.5v11L5 10H2z"/><path d="M11 5.2c1.4 1.2 1.4 4.4 0 5.6l.8.8c1.9-1.7 1.9-5.5 0-7.2zM12.6 3.6c2.4 2.2 2.4 6.6 0 8.8l.8.8c2.9-2.7 2.9-7.7 0-10.4z"/></svg><span class="label">声音 开</span></button>
+    <button id="btn-full" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2h5v2H4v3H2zM9 2h5v5h-2V4H9zM2 9h2v3h3v2H2zM12 9h2v5H9v-2h3z"/></svg><span class="label">全屏</span></button>
+  </div>
+  <div class="now">正在播放：<span id="chapter-now">深夜 · Late night</span></div>
+
+  <section>
+    <h2>章节<small>chapters</small></h2>
+    <div class="chapters"></div>
+  </section>
+
+  <section class="about">
+    <div>
+      <h2>故事<small>the story</small></h2>
+      <p>深夜，主人还在写代码。屏幕里，Claude Code 的橙色小方块像往常一样陪着他。保存、说晚安、合上电脑、关灯离开——房间安静下来。</p>
+      <p>过了一会儿，合上的笔记本缝隙里亮起了一点橙色的光……</p>
+      <p class="en">Late at night, a programmer finishes up with the little orange friend who lives in his terminal. He says good night, closes the lid and turns off the light. A while later, an orange glow appears in the gap of the closed laptop.</p>
+    </div>
+    <div>
+      <h2>怎么做的<small>how it was made</small></h2>
+      <ul>
+        <li>每一帧都由 Canvas 2D 代码实时绘制：手绘抖动线条、2.5D 摄像机、灯光与动画曲线都写在 <code>js/</code> 里。</li>
+        <li>配乐为代码谱写（MIDI → FluidR3 GM 音色库渲染），音效来自 freesound.org / Kenney 的 CC0 素材，并按画面自动对位混音。</li>
+        <li>Every frame is drawn by code; the score is composed in code and every footstep, key click and crunch is placed from the animation data itself.</li>
+      </ul>
+      <p class="keys" style="margin-top:12px">快捷键 · keys: <kbd>Space</kbd> 播放/暂停 · <kbd>←</kbd><kbd>→</kbd> 5 秒 · <kbd>F</kbd> 全屏 · <kbd>M</kbd> 静音</p>
+    </div>
+  </section>
+
+  <footer>音乐与画面：原创（代码生成）· 字体 Patrick Hand / ZCOOL KuaiLe (SIL OFL) · 音效 CC0（freesound.org 贡献者、Kenney）· 小橙块为 Claude Code 吉祥物的同人演绎。</footer>
+</div>
+<script src="app.js" charset="utf-8"></script>
