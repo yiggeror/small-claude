@@ -4,7 +4,7 @@ import { key, clamp, lerp, ease, wobble, landSquash, TAU, hash2 } from '../core.
 import { Cam } from '../world.js';
 import { POS, DY } from '../render.js';
 import { drawCookiePiece, drawCrumbs } from '../props.js';
-import { autoBlink } from '../cube.js';
+import { autoBlink, CUBE_DIMS } from '../cube.js';
 import { addGlow } from '../light.js';
 import { autoBody, saccade, sw, facingAt } from '../motion.js';
 import { worldShot } from './cams.js';
@@ -19,10 +19,10 @@ export const BITE_A = Math.PI;         // the missing chunk faces the little fri
 const PATH = [
   { t: T.cookie, x: 46.6, y: PAD_Y, z: 5.4 },
   { t: 143.3, x: 46.6, y: PAD_Y, z: 5.4, m: 'hold' },
-  { t: 143.65, x: 49.8, y: DY, z: 7.5, m: 'hop', h: 1.3 },
-  { t: 144.6, x: 52.4, y: DY, z: 10.2, m: 'tiptoe' },
-  { t: 144.7, x: 52.4, y: DY, z: 10.2, m: 'hold' },
-  { t: 145.0, x: STAND.x, y: PLATE_Y, z: STAND.z, m: 'hop', h: 1.1 },
+  // tiptoe to the far corner of the sticky pad, then hop straight across onto the plate
+  { t: 144.6, x: 47.9, y: PAD_Y, z: 8.6, m: 'tiptoe' },
+  { t: 144.7, x: 47.9, y: PAD_Y, z: 8.6, m: 'hold' },
+  { t: 145.0, x: STAND.x, y: PLATE_Y, z: STAND.z, m: 'hop', h: 1.4 },
   { t: 154.2, x: STAND.x, y: PLATE_Y, z: STAND.z, m: 'hold' },
   { t: 154.6, x: STAND.x + 1.1, y: PLATE_Y, z: STAND.z, m: 'tiptoe' },
   { t: T.snap, x: STAND.x + 1.1, y: PLATE_Y, z: STAND.z, m: 'hold' },
@@ -35,7 +35,8 @@ function pieceLeft(t) { return 1 - clamp((t - (T.munch + 0.3)) / 2.3); }
 
 export function cubeState(t) {
   const c = autoBody(t, PATH, 5);
-  c.zBias = 3;
+  // while standing on the sticky pad (sorted at its front edge) it must stay in front of it
+  c.zBias = t < 145.0 ? 6 : 3;
   c.blink = autoBlink(t, 41, 2.5);
   c.eyes = 'normal';
   // --- sniff sniff
@@ -112,11 +113,12 @@ export function cubeState(t) {
   if (t >= T.snap && t < T.munch) {
     const f = key(t, [[T.snap, 0], [T.snap + 0.15, 1, 'out'], [157.6, 1], [157.9, 0, 'inOut']]);
     c.rot = -0.5 * f; c.sq = 0.15 * f + (1 - landSquash(t, T.snap + 0.15, 0.25));
-    c.armL = { a: 1.2 }; c.armR = { a: 1.2 };
+    // hugging the prize to its chest (arms wrapped in front)
+    c.armL = { a: 0.45, len: 1.25, front: true }; c.armR = { a: 0.45, len: 1.25, front: true };
     c.eyes = t < T.snap + 0.2 ? 'squeeze' : 'tiny'; c.mouth = 'o'; c.mouthK = 0.5;
     c.lookX = t > T.snap + 0.4 ? -1 : 0; c.blink = 0;
-    if (t > 157.9) { c.eyes = 'star'; c.lookX = 0.2; c.lookY = -0.8; c.mouth = 'grin'; c.lookX = 0; c.armL = { a: 0.9 }; c.armR = { a: 0.9 }; }
-    c.hold = { up: true };
+    if (t > 157.9) { c.eyes = 'star'; c.lookX = 0.2; c.lookY = -0.8; c.mouth = 'grin'; c.lookX = 0; c.armL = { a: 0.3, len: 1.25, front: true }; c.armR = { a: 0.3, len: 1.25, front: true }; }
+    c.hold = {};
   }
   // --- nom nom nom
   if (t >= T.munch && t < T.steps) {
@@ -151,7 +153,10 @@ export function cubeState(t) {
       const s = 1.3 * (h.left ?? 1);
       if (s <= 0.05) return;
       cx.save();
-      cx.translate(cs.x ?? 0, h.up ? -cs.size * 1.2 : -cs.size * 0.42);
+      // follow the body: same pivot / rotation / squash as the cube
+      const sz = cs.size, cyc = -sz * (CUBE_DIMS.L + CUBE_DIMS.H / 2);
+      cx.translate(cs.x ?? 0, (cs.y ?? 0) + cyc); cx.rotate(cs.rot || 0); cx.translate(0, -cyc);
+      cx.translate(0, -sz * 0.42 * (1 - (cs.sq || 0)));
       drawCookiePiece(cx, s);
       cx.restore();
     };

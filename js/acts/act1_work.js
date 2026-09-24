@@ -145,17 +145,47 @@ function face2(t) {
   return p;
 }
 
-// medium shot on the laptop as the lid closes (a hand pushes the lid from the top)
+// medium shot on the laptop as the lid closes: his right arm reaches in from the bottom right
+// (from his side of the desk), fingers hooked over the top edge, follows the lid down, then withdraws.
 function lidShot(ctx, t) {
   const camera = new Cam({ x: 6, y: DY + 14, z: -45, f: 1500, hy: 600 });
+  let grip = null;
   worldShot(ctx, t, camera, (S) => {
     S.human = null;
-    S.laptop.lidTop = (c, yTop, el) => {
-      if (t > T.lidClose + 0.5) return;
-      const k = key(t, [[T.lidClose + 0.05, 0], [T.lidClose + 0.45, 1, 'in']]);
-      drawHand(c, 2, yTop - 3 - k * 25, Math.PI, 0.55, {});
-    };
+    S.laptop.lidTop = (c, yTop) => { grip = { m: c.getTransform(), yTop }; };
+    S.overlays = [(c) => { if (grip) drawClosingArm(c, t, grip); }];
   });
+}
+function drawClosingArm(ctx, t, g) {
+  // withdraw after the lid clicks shut
+  const away = key(t, [[T.lidClose + 0.1, 0], [T.lidClose + 0.75, 1, 'inOut']]);
+  if (away >= 1) return;
+  ctx.save();
+  ctx.setTransform(g.m);
+  const lift = key(t, [[T.lidClose + 0.05, 0], [T.lidClose + 0.25, 1, 'out']]);
+  // the arm runs from the wrist toward the camera (off frame, bottom right) and grows with perspective
+  const far = [58, g.yTop + 52];
+  const wx0 = 1.5, wy0 = g.yTop + 7;
+  const wx = lerp(wx0, far[0], ease.in(away)), wy = lerp(wy0, far[1], ease.in(away)) - lift * 2.5;
+  const dx = far[0] - wx, dy = far[1] - wy, len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len, ny = dx / len;
+  const w0 = 3.2, w1 = 11;
+  // sleeve (hoodie), cuff at the wrist
+  shape(ctx, [[wx + nx * w0, wy + ny * w0], [far[0] + nx * w1, far[1] + ny * w1], [far[0] - nx * w1, far[1] - ny * w1], [wx - nx * w0, wy - ny * w0]], { fill: C.hoodie, lw: 2.8, seed: 3460 });
+  line(ctx, [[wx + nx * w0 * 1.05 + dx / len * 2.2, wy + ny * w0 * 1.05 + dy / len * 2.2], [wx - nx * w0 * 1.05 + dx / len * 2.2, wy - ny * w0 * 1.05 + dy / len * 2.2]], { lw: 1.8, stroke: C.hoodieShade, seed: 3461 });
+  // back of the right hand, fingers hooked over the lid's top edge (thumb on the left)
+  ctx.translate(wx, wy);
+  // fingers point away from the forearm; the wrist bends so the hand stays fairly upright
+  ctx.rotate(Math.atan2(-dx, dy) * 0.45);
+  const hk = 1 - lift;
+  shape(ctx, [[-3.4, 0.5], [-3.9, -4.2], [-3.2, -6.4], [3.1, -6.6], [3.8, -4.2], [3.3, 0.5]], { fill: C.skin, lw: 2.4, seed: 3462 });
+  // fingers: over the edge while gripping, straightening as the hand lets go
+  for (let i = 0; i < 4; i++) {
+    const fx = -2.5 + i * 1.65, ft = -6.4 - 1.6 * hk - (i === 1 || i === 2 ? 0.5 : 0) - 1.4 * (1 - hk);
+    shape(ctx, [[fx - 0.8, -6.2], [fx - 0.75, ft + 0.4], [fx, ft - 0.2], [fx + 0.75, ft + 0.4], [fx + 0.8, -6.2]], { fill: C.skin, lw: 2, seed: 3463 + i });
+  }
+  shape(ctx, [[-3.5, -1.5], [-5.6, -3.4], [-5.5, -5.2], [-3.9, -4.6]], { fill: C.skin, lw: 2.1, seed: 3468 });
+  ctx.restore();
 }
 
 // the cookie goes back on the plate

@@ -70,7 +70,7 @@ export function drawFaceShot(ctx, t, p, o = {}) {
   }
   const scr = o.screen ?? 1;
   if (scr > 0) {
-    addGlow(ctx, 960 + (o.panX || 0), 520 + (o.panY || 0), 700 * zoom, '215,225,255', 0.16 * scr * (1.4 - lit * 0.6), 1, 1.1);
+    addGlow(ctx, 960 + (o.panX || 0), 520 + (o.panY || 0), 700 * zoom, '215,225,255', 0.09 * scr * (1.4 - lit * 0.6), 1, 1.1);
   }
   ctx.restore();
 }
