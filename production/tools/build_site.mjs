@@ -28,16 +28,27 @@ const b64 = (f) => fs.readFileSync(f).toString('base64');
 const fontCss = `@font-face{font-family:"Patrick Hand";src:url(data:font/woff2;base64,${b64(path.join(tmp, 'patrick.woff2'))}) format("woff2");font-display:block}
 @font-face{font-family:"ZCOOL KuaiLe";src:url(data:font/woff2;base64,${b64(path.join(tmp, 'zcool.woff2'))}) format("woff2");font-display:block}`;
 const html = fs.readFileSync(path.join(root, 'site_src/index.html'), 'utf8').replace('/*__FONTS__*/', fontCss);
-fs.writeFileSync(path.join(out, 'index.html'), html);
+// site_src/index.html is page content only; the standalone site gets a full document around it
+// (the body-only version is also kept for hosts that supply their own skeleton, e.g. Claude artifacts)
+fs.writeFileSync(path.join(tmp, 'page.html'), html);
+fs.writeFileSync(path.join(out, 'index.html'), `<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+${html.replace(/(<\/style>)/, '$1\n</head>\n<body>')}
+</body>
+</html>
+`);
 
 // 3) soundtrack
 const wav = path.join(root, 'production/build/soundtrack.wav');
 if (fs.existsSync(wav) && !process.argv.includes('--no-audio')) {
   const ff = process.env.FFMPEG || 'ffmpeg';
-  execFileSync(ff, ['-y', '-v', 'error', '-i', wav, '-c:a', 'aac', '-b:a', '160k', '-movflags', '+faststart', path.join(out, 'audio/soundtrack.m4a')]);
+  execFileSync(ff, ['-y', '-v', 'error', '-i', wav, '-c:a', 'aac', '-b:a', '160k', '-movflags', '+faststart', path.join(out, 'audio/soundtrack.mp4')]);
   execFileSync(ff, ['-y', '-v', 'error', '-i', wav, '-c:a', 'libvorbis', '-q:a', '5', path.join(out, 'audio/soundtrack.ogg')]);
 }
-for (const f of ['index.html', 'app.js', 'audio/soundtrack.m4a', 'audio/soundtrack.ogg']) {
+for (const f of ['index.html', 'app.js', 'audio/soundtrack.mp4', 'audio/soundtrack.ogg']) {
   const p = path.join(out, f);
   if (fs.existsSync(p)) console.log(f.padEnd(24), (fs.statSync(p).size / 1024).toFixed(0), 'KB');
 }

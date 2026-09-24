@@ -55,12 +55,12 @@ Requirements: Node 18+, Playwright with Chromium, Python 3 with `numpy scipy sou
 FluidSynth with `FluidR3_GM.sf2`, and an ffmpeg with libx264.
 
 ```sh
-npm install                                   # esbuild (site bundle)
-node production/tools/export_cues.mjs         # story beats + animation events → production/build/cues.json
-python3 production/audio/score.py             # score → production/build/music.wav
-python3 production/audio/mix.py               # full mix → production/build/soundtrack.wav
-node production/tools/build_site.mjs          # site/ (bundled JS, subset fonts, encoded soundtrack)
-node production/tools/render_video.cjs        # frames → film/after-the-laptop-closes.mp4
+npm install                                             # esbuild (site bundle)
+node production/tools/export_cues.mjs                   # story beats + animation events → production/build/cues.json
+python3 production/audio/score.py                       # score → production/build/music.wav
+python3 production/audio/mix.py                         # full mix → production/build/soundtrack.wav
+node production/tools/build_site.mjs                    # site/ (bundled JS, subset fonts, encoded soundtrack)
+node production/tools/render_video.cjs --bitrate 2750k  # frames → film/after-the-laptop-closes.mp4
 ```
 
 For development, `node production/tools/serve.cjs 8080` serves the repo; `dev/frame.html` exposes

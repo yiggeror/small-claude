@@ -1,6 +1,7 @@
 // Render the film to an MP4: deterministic frame capture in headless Chromium (parallel workers),
 // then x264 + AAC with the mixed soundtrack.
 //   node render_video.cjs [--fps 30] [--from 0] [--to END] [--scale 1] [--workers 4] [--out film.mp4] [--frames dir]
+//                         [--crf 18 | --bitrate 2750k] [--force 1] [--frames-only 1] [--encode-only 1]
 const { chromium } = require('playwright');
 const { start } = require('./serve.cjs');
 const fs = require('fs');
@@ -18,18 +19,22 @@ const ffmpeg = process.env.FFMPEG || 'ffmpeg';
 
 (async () => {
   fs.mkdirSync(framesDir, { recursive: true });
-  const srv = await start(0);
-  const url = `http://127.0.0.1:${srv.address().port}/dev/frame.html`;
-  const browser = await chromium.launch();
-  const probe = await browser.newPage();
-  await probe.goto(url);
-  await probe.waitForFunction(() => window.__ready === true);
-  const DURATION = await probe.evaluate(() => window.DURATION);
-  await probe.close();
+  const encodeOnly = !!args['encode-only'];
+  const srv = encodeOnly ? null : await start(0);
+  const url = srv && `http://127.0.0.1:${srv.address().port}/dev/frame.html`;
+  const browser = encodeOnly ? null : await chromium.launch();
+  let DURATION = fs.readdirSync(framesDir).filter((f) => f.endsWith('.jpg')).length / fps;
+  if (browser) {
+    const probe = await browser.newPage();
+    await probe.goto(url);
+    await probe.waitForFunction(() => window.__ready === true);
+    DURATION = await probe.evaluate(() => window.DURATION);
+    await probe.close();
+  }
   const t0 = +(args.from || 0), t1 = Math.min(+(args.to || DURATION), DURATION);
   const f0 = Math.round(t0 * fps), f1 = Math.floor(t1 * fps);
   const total = f1 - f0;
-  console.log(`rendering ${total} frames (${t0}s → ${t1}s @ ${fps}fps, ${1920 * scale}x${1080 * scale}) with ${workers} workers`);
+  if (browser) console.log(`rendering ${total} frames (${t0}s → ${t1}s @ ${fps}fps, ${1920 * scale}x${1080 * scale}) with ${workers} workers`);
   let done = 0; const tStart = Date.now();
   const work = async (w) => {
     const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
@@ -56,21 +61,30 @@ const ffmpeg = process.env.FFMPEG || 'ffmpeg';
     }
     await page.close();
   };
-  await Promise.all(Array.from({ length: workers }, (_, w) => work(w)));
-  await browser.close(); srv.close();
+  if (browser) {
+    await Promise.all(Array.from({ length: workers }, (_, w) => work(w)));
+    await browser.close(); srv.close();
+  }
   if (args['frames-only']) return;
   const audio = path.join(root, 'production/build/soundtrack.wav');
   fs.mkdirSync(path.dirname(out), { recursive: true });
-  const ff = [
-    '-y', '-framerate', String(fps), '-start_number', String(f0), '-i', path.join(framesDir, '%06d.jpg'),
-    ...(fs.existsSync(audio) ? ['-ss', String(t0), '-t', String(t1 - t0), '-i', audio] : []),
-    '-c:v', 'libx264', '-preset', args.preset || 'slow', '-crf', args.crf || '18', '-pix_fmt', 'yuv420p', '-tune', 'animation',
-    '-profile:v', 'high', '-movflags', '+faststart',
-    ...(fs.existsSync(audio) ? ['-c:a', 'aac', '-b:a', '192k', '-shortest'] : []),
-    '-metadata', 'title=After the Laptop Closes / 关闭电脑之后', out,
-  ];
+  // --bitrate 2750k: two-pass average-bitrate encode (keeps the file under GitHub's 100 MB limit); otherwise CRF
+  const input = ['-y', '-framerate', String(fps), '-start_number', String(f0), '-i', path.join(framesDir, '%06d.jpg')];
+  const video = ['-c:v', 'libx264', '-preset', args.preset || 'slow', '-pix_fmt', 'yuv420p', '-tune', 'animation', '-profile:v', 'high'];
+  const passlog = path.join(root, 'production/build/x264pass');
+  const run = (a) => { const r = spawnSync(ffmpeg, a, { stdio: 'inherit' }); if (r.status !== 0) process.exit(r.status); };
   console.log('encoding →', out);
-  const r = spawnSync(ffmpeg, ff, { stdio: 'inherit' });
-  if (r.status !== 0) process.exit(r.status);
+  if (args.bitrate) {
+    const br = args.bitrate, max = `${Math.round(parseInt(br, 10) * 2)}k`;
+    run([...input, ...video, '-b:v', br, '-maxrate', max, '-bufsize', max, '-pass', '1', '-passlogfile', passlog, '-an', '-f', 'null', '-']);
+    video.push('-b:v', br, '-maxrate', max, '-bufsize', max, '-pass', '2', '-passlogfile', passlog);
+  } else video.push('-crf', args.crf || '18');
+  run([
+    ...input,
+    ...(fs.existsSync(audio) ? ['-ss', String(t0), '-t', String(t1 - t0), '-i', audio] : []),
+    ...video, '-movflags', '+faststart',
+    ...(fs.existsSync(audio) ? ['-c:a', 'aac', '-b:a', '160k', '-shortest'] : []),
+    '-metadata', 'title=After the Laptop Closes / 关闭电脑之后', out,
+  ]);
   console.log('done in', ((Date.now() - tStart) / 60000).toFixed(1), 'min');
 })();

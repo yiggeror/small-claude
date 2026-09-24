@@ -23,7 +23,7 @@ export function mountPlayer(root, opts = {}) {
   const stage = $('.stage'), canvas = $('canvas'), ctx = canvas.getContext('2d', { alpha: false });
   const btnPlay = $('.play-big'), btnToggle = $('#btn-toggle'), btnFull = $('#btn-full'), btnMute = $('#btn-mute');
   const scrub = $('#scrub'), timeEl = $('#time'), chapEl = $('#chapter-now'), chapList = $('.chapters');
-  const audioUrls = opts.audio || ['audio/soundtrack.m4a', 'audio/soundtrack.ogg'];
+  const audioUrls = opts.audio || ['audio/soundtrack.mp4', 'audio/soundtrack.ogg'];
 
   // ---------------------------------------------------------------- audio (HTMLAudio first, WebAudio fallback)
   let audio = null, audioOk = false, webAudio = null;
@@ -31,7 +31,7 @@ export function mountPlayer(root, opts = {}) {
   function makeAudio() {
     audio = new Audio();
     audio.preload = 'auto';
-    for (const u of audioUrls) { const canM4a = u.endsWith('.m4a') && audio.canPlayType('audio/mp4') !== ''; const canOgg = u.endsWith('.ogg') && audio.canPlayType('audio/ogg') !== ''; if (canM4a || canOgg) { audio.src = u; break; } }
+    for (const u of audioUrls) { const canM4a = /\.(m4a|mp4)$/.test(u) && audio.canPlayType('audio/mp4') !== ''; const canOgg = u.endsWith('.ogg') && audio.canPlayType('audio/ogg') !== ''; if (canM4a || canOgg) { audio.src = u; break; } }
     audio.addEventListener('canplay', () => { audioOk = true; }, { once: true });
     audio.addEventListener('error', () => { audioOk = false; setupWebAudio(); }, { once: true });
     audio.addEventListener('ended', () => { playing = false; sync(); });
