@@ -4,7 +4,7 @@
 
 ## Picture
 - All drawing and animation: original, generated frame by frame by the code in `js/` (Canvas 2D).
-- The little orange friend (小橙块) is fan art of the Claude Code mascot, drawn after the character sheet supplied for this project.
+- The little orange friend (小橙块) is fan art of the Claude Code mascot (© Anthropic), drawn after the character sheet supplied for this project. Unofficial; not affiliated with or endorsed by Anthropic.
 
 ## Music
 - Original score, composed in code (`production/audio/score.py`) and rendered with **FluidSynth** using the **FluidR3 GM** soundfont by Frank Wen (MIT licence).

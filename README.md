@@ -13,6 +13,7 @@ and the last cookie on the plate.
 
 ## Watch
 
+- **Online:** https://yiggeror.github.io/small-claude/ — plays in the browser, no install.
 - **`site/`** — the self-contained static website. It renders the film live on a `<canvas>`, locked to the
   soundtrack's clock (chapters, scrubbing, fullscreen, keyboard shortcuts). Serve the folder with any static
   server, e.g. `npx serve site` or `python3 -m http.server -d site`, then open it in a browser.
@@ -65,3 +66,22 @@ node production/tools/render_video.cjs --bitrate 2750k  # frames → film/after-
 
 For development, `node production/tools/serve.cjs 8080` serves the repo; `dev/frame.html` exposes
 `renderAt(t)`, and `production/tools/snap.cjs` / `scan.cjs` render stills and contact sheets for review.
+
+## License · 许可
+
+- **Code** (`js/`, `site_src/`, `production/`, `dev/`) — [MIT](LICENSE).
+- **The film** (the rendered video, the soundtrack and score, the artwork it produces) —
+  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/): share and remix freely, with credit.
+- **Third-party assets keep their own licences**: sound effects are CC0, the fonts are SIL OFL 1.1 — see
+  [`CREDITS.md`](CREDITS.md) and `fonts/`.
+
+代码采用 MIT 许可；成片、配乐与画面采用 CC BY 4.0（可自由转载、二创，请注明出处）；音效与字体沿用各自的许可（见 `CREDITS.md`）。
+
+## Disclaimer · 声明
+
+This is an unofficial fan project. The little orange friend is fan art of the Claude Code mascot, which belongs to
+Anthropic; this project is not affiliated with or endorsed by Anthropic, and the licences above do not cover the mascot
+character itself.
+
+本项目为非官方同人作品。小橙块是 Claude Code 吉祥物的同人形象，角色归 Anthropic 所有；本项目与 Anthropic 无关，
+上述许可不包含该角色形象本身。
