@@ -1,0 +1,26 @@
+<!doctype html><html><body style="margin:0;background:#222">
+<canvas id="c" width="1920" height="1080"></canvas>
+<script type="module">
+import { C, setBoil, text } from '../js/draw.js';
+import { drawHumanBack, drawHumanSide, drawHumanFront } from '../js/human.js';
+import { drawChairBack } from '../js/props.js';
+const ctx = document.getElementById('c').getContext('2d');
+window.renderAt = (t) => {
+  setBoil(t);
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle = C.paper; ctx.fillRect(0,0,1920,1080);
+  const at = (x,y,s,fn)=>{ctx.save();ctx.translate(x,y);ctx.scale(s,s);fn();ctx.restore();};
+  // side walk cycle
+  for (let i=0;i<6;i++) at(120+i*170, 420, 2.1, ()=>drawHumanSide(ctx,{walk:i/6, walkAmt:1}));
+  at(1160, 420, 2.1, ()=>drawHumanSide(ctx,{reach:{x:30,y:-110,k:1}}));
+  at(1340, 420, 2.1, ()=>drawHumanSide(ctx,{eyes:'closed', mouth:'yawn', headTilt:-0.2}));
+  // back seated
+  const bp = [{}, {typeK:1,typePh:0.3}, {armsUp:1, headTilt:-0.1}, {rub:1, headTilt:0.1, hunch:0.5}, {headTurn:0.8}, {stand:1}];
+  bp.forEach((p,i)=> at(160+i*300, 1000, 3.2, ()=>{ ctx.save(); ctx.translate(0,-50); drawHumanBack(ctx,p); ctx.restore(); drawChairBack(ctx,{}); }));
+  // front busts
+  const fp = [{}, {eyes:'open', lid:0.5, mouth:'neutral'}, {mouth:'yawn', eyes:'closed', tilt:0.1}, {eyes:'squint', mouth:'flat', brows:{l:-0.5,r:0.3}}, {eyes:'happy', mouth:'smile', blush:0.6}];
+  fp.forEach((p,i)=> at(1540 + (i%2)*200, 180 + Math.floor(i/2)*190, 4.2, ()=>drawHumanFront(ctx,p)));
+  return document.getElementById('c').toDataURL('image/png');
+};
+window.__ready = true;
+</script></body></html>

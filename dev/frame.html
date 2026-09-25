@@ -1,0 +1,16 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:"Patrick Hand";src:url(../fonts/PatrickHand-Regular.ttf)}
+@font-face{font-family:"ZCOOL KuaiLe";src:url(../fonts/ZCOOLKuaiLe-Regular.ttf)}
+body{margin:0;background:#111}</style></head><body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script type="module">
+import { renderFrame, DURATION, shotAt } from '../js/film.js';
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+window.renderAt = (t) => { renderFrame(ctx, t); return cv.toDataURL('image/png'); };
+window.renderRaw = (t) => { renderFrame(ctx, t); };
+window.DURATION = DURATION;
+window.shotName = (t) => shotAt(t).name;
+await Promise.all([document.fonts.load('40px "Patrick Hand"'), document.fonts.load('40px "ZCOOL KuaiLe"', '关闭电脑之后')]);
+window.__ready = true;
+</script></body></html>

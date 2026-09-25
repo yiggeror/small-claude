@@ -1,0 +1,25 @@
+<!doctype html><html><body style="margin:0;background:#222">
+<canvas id="c" width="1920" height="1080"></canvas>
+<style>@font-face{font-family:"Patrick Hand";src:url(../fonts/PatrickHand-Regular.ttf)}</style>
+<script type="module">
+import { renderWorld, lightWorld, POS, DY } from '../js/render.js';
+import { Cam } from '../js/world.js';
+import { C } from '../js/draw.js';
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const screenFn = (c, w, h, on) => { c.fillStyle = '#2a2522'; c.fillRect(0,0,w,h); c.fillStyle='#e8743b'; c.fillRect(2,2,4,2.5); c.fillStyle='#e9dfcf'; for(let i=0;i<8;i++) c.fillRect(2, 6+i*1.4, 6+((i*37)%15), 0.5); };
+window.renderAt = (t) => {
+  const mode = Math.floor(t);
+  ctx.setTransform(1,0,0,1,0,0); ctx.fillStyle = '#000'; ctx.fillRect(0,0,1920,1080);
+  let cam, S = { t, lit: 1, clockMin: 107, laptop: { a: 1.85, screen: screenFn }, screen: 1,
+    human: { mode: 'back', x: POS.seat.x, y: POS.seat.y, z: POS.seat.z, pose: { typeK: 1, typePh: t } }, cookie: {} };
+  if (mode === 0) cam = new Cam({ x: 55, y: 150, z: -260, f: 1100, hy: 330 });
+  if (mode === 1) { cam = new Cam({ x: 55, y: 150, z: -260, f: 1100, hy: 330 }); S.lit = 0; S.human = null; S.laptop = { a: 0 }; S.screen = 0; S.seam = 0.6; S.switchOn = 0; }
+  if (mode === 2) { cam = new Cam({ x: 10, y: DY + 5, z: -12, f: 1000, hy: 560 }); S.lit = 0; S.human = null; S.laptop = { a: 0 }; S.screen = 0; S.seam = 0.3;
+     S.cube = { x: 18, y: DY, z: 22, size: 5, facing: 0.4 }; }
+  if (mode === 3) { cam = new Cam({ x: -60, y: 150, z: -330, f: 1000, hy: 330 }); S.human = { mode: 'side', x: -120, z: 10, flip: true, pose: { walk: t*0.7, walkAmt: 1 } }; S.doorOpen = 0.6; S.lit = 0.2 }
+  renderWorld(ctx, cam, S);
+  lightWorld(ctx, cam, S);
+  return cv.toDataURL('image/png');
+};
+window.__ready = true;
+</script></body></html>
